@@ -1,5 +1,6 @@
 package com.github.ajnorthouse.ticktacktoe;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
@@ -42,16 +43,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         buttonReset.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                resetBoard();
+                resetGame();
             }
         });
     }
 
     @Override
     public void onClick(View v) {
+        doTurn(v);
+    }
+
+    private void doTurn(View v) {
+
         if (!((Button) v).getText().toString().equals("")) {
             return;
         }
+
+        disableButtons();
 
         if (isPlayerTurn) {
             ((Button) v).setText("X");
@@ -70,7 +78,69 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (numOfTurns == 9) {
             draw();
         } else {
-            isPlayerTurn = !isPlayerTurn;
+            if (isPlayerTurn) {
+                isPlayerTurn = false;
+                compTurn();
+            } else {
+                isPlayerTurn = true;
+            }
+        }
+        enableButtons();
+    }
+
+    private void compTurn() {
+        //random number
+        int randomNum = (int)(Math.random() * 8 + 1);
+
+        //converts that random number to a board position
+        int tempCol = 0, tempRow = 0;
+        switch (randomNum) {
+            case 1:
+            case 2:
+            case 3:
+                tempRow = 0;
+                if (randomNum == 1) {tempCol = 0; }
+                if (randomNum == 2) {tempCol = 1; }
+                if (randomNum == 3) {tempCol = 2; }
+                break;
+            case 4:
+            case 5:
+            case 6:
+                tempRow = 1;
+                if (randomNum == 4) {tempCol = 0; }
+                if (randomNum == 5) {tempCol = 1; }
+                if (randomNum == 6) {tempCol = 2; }
+                break;
+            case 7:
+            case 8:
+            case 9:
+                tempRow = 2;
+                if (randomNum == 7) {tempCol = 0; }
+                if (randomNum == 8) {tempCol = 1; }
+                if (randomNum == 9) {tempCol = 2; }
+                break;
+        }
+
+        if (!button[tempRow][tempCol].getText().equals("")) {
+            compTurn();
+        }
+
+        doTurn(button[tempRow][tempCol]);
+    }
+
+    private void disableButtons() {
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                button[row][col].setEnabled(false);
+            }
+        }
+    }
+
+    private void enableButtons() {
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 3; col++) {
+                button[row][col].setEnabled(true);
+            }
         }
     }
 
@@ -127,17 +197,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void playerWins() {
+        resetBoard();
         playerScore++;
         Toast.makeText(this, "You Won!", Toast.LENGTH_SHORT).show();
         updatePointsText();
-        resetBoard();
     }
 
     private void comWins() {
+        resetBoard();
         compScore++;
         Toast.makeText(this, "Computer Won!", Toast.LENGTH_SHORT).show();
         updatePointsText();
-        resetBoard();
     }
 
     private void draw() {
@@ -159,5 +229,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 button[row][col].setText("");
             }
         }
+    }
+
+    private void resetGame() {
+        playerScore = 0;
+        compScore = 0;
+        updatePointsText();
+        resetBoard();
+        enableButtons();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putInt("playerScore", playerScore);
+        outState.putInt("compScore", compScore);
+        outState.putInt("numOfTurns", numOfTurns);
+        outState.putBoolean("isPlayerTurn", isPlayerTurn);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(@NonNull Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        playerScore = savedInstanceState.getInt("playerScore");
+        compScore = savedInstanceState.getInt("compScore");
+        numOfTurns = savedInstanceState.getInt("numOfTurns");
+        isPlayerTurn = savedInstanceState.getBoolean("isPlayerTurn");
     }
 }
